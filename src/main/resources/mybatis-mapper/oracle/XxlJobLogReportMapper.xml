@@ -49,8 +49,7 @@
     </update>
 
     <select id="queryLogReport" resultMap="XxlJobLogReport">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_LOG_REPORT t
         WHERE t.TRIGGER_DAY between #{triggerDayFrom,jdbcType=DATE} and #{triggerDayTo,jdbcType=DATE}
         ORDER BY t.TRIGGER_DAY ASC

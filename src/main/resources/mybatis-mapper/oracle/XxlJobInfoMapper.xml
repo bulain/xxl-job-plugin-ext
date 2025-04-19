@@ -169,8 +169,7 @@
     </insert>
 
     <select id="loadById" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_INFO t
         WHERE t.ID = #{id,jdbcType=NUMERIC}
     </select>
@@ -209,8 +208,7 @@
     </delete>
 
     <select id="getJobsByGroup" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_INFO t
         WHERE t.JOB_GROUP = #{jobGroup,jdbcType=NUMERIC}
     </select>
@@ -222,18 +220,12 @@
 
 
     <select id="scheduleJobQuery" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
-        SELECT TMP.*,ROWNUM
-        FROM (
-
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_INFO t
         WHERE t.TRIGGER_STATUS = 1
         and t.TRIGGER_NEXT_TIME <![CDATA[ <= ]]> #{maxNextTime,jdbcType=NUMERIC}
         ORDER BY ID ASC
-
-        ) TMP
-        where ROWNUM <![CDATA[ <= ]]> #{pagesize,jdbcType=NUMERIC}
+        OFFSET 1 ROWS FETCH NEXT #{pagesize} ROWS ONLY
     </select>
 
     <update id="scheduleUpdate" parameterType="com.xxl.job.admin.core.model.XxlJobInfo">
@@ -244,26 +236,4 @@
         WHERE ID = #{id,jdbcType=NUMERIC}
     </update>
 
-    <select id="findList" parameterType="java.util.HashMap" resultMap="XxlJobInfo">
-        SELECT <include refid="Base_Column_List" />
-        FROM xxl_job_info AS t
-        <where>
-            <if test="jobGroup gt 0">
-                AND t.job_group = #{jobGroup}
-            </if>
-            <if test="triggerStatus gte 0">
-                AND t.trigger_status = #{triggerStatus}
-            </if>
-            <if test="jobDesc != null and jobDesc != ''">
-                AND t.job_desc like CONCAT(CONCAT('%', #{jobDesc}), '%')
-            </if>
-            <if test="executorHandler != null and executorHandler != ''">
-                AND t.executor_handler like CONCAT(CONCAT('%', #{executorHandler}), '%')
-            </if>
-            <if test="author != null and author != ''">
-                AND t.author like CONCAT(CONCAT('%', #{author}), '%')
-            </if>
-        </where>
-        ORDER BY id DESC
-    </select>
 </mapper>

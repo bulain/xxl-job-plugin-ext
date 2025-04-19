@@ -34,26 +34,35 @@
     </delete>
 
     <select id="findAll" parameterType="java.util.HashMap" resultMap="XxlJobRegistry">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_REGISTRY t
         WHERE t.UPDATE_TIME  <![CDATA[ > ]]>  (#{nowTime} - INTERVAL '${timeout}' SECOND)
     </select>
 
-    <update id="registryUpdate">
-        UPDATE XXL_JOB_REGISTRY
-        SET UPDATE_TIME = #{updateTime,jdbcType=DATE}
-        WHERE REGISTRY_GROUP = #{registryGroup,jdbcType=VARCHAR}
-          AND REGISTRY_KEY = #{registryKey,jdbcType=VARCHAR}
-          AND REGISTRY_VALUE = #{registryValue,jdbcType=VARCHAR}
-    </update>
-
-    <insert id="registrySave">
+    <insert id="registrySaveOrUpdate">
         <selectKey keyProperty="id" order="BEFORE" resultType="java.lang.Integer">
             select SEQ_XXL_JOB_REGISTRY_ID.nextval from dual
         </selectKey>
-        INSERT INTO XXL_JOB_REGISTRY(ID, REGISTRY_GROUP, REGISTRY_KEY, REGISTRY_VALUE, UPDATE_TIME)
-        VALUES(#{id,jdbcType=NUMERIC}, #{registryGroup,jdbcType=VARCHAR} , #{registryKey,jdbcType=VARCHAR} , #{registryValue,jdbcType=VARCHAR}, #{updateTime,jdbcType=DATE})
+        MERGE INTO xxl_job_registry t
+        USING (
+            SELECT
+            #{id,jdbcType=NUMERIC} as id,
+            #{registryGroup,jdbcType=VARCHAR} AS registry_group,
+            #{registryKey,jdbcType=VARCHAR} AS registry_key,
+            #{registryValue,jdbcType=VARCHAR} AS registry_value,
+            #{updateTime,jdbcType=DATE} AS update_time
+            FROM DUAL
+        ) s
+        ON (
+            t.registry_group = s.registry_group
+            AND t.registry_key = s.registry_key
+            AND t.registry_value = s.registry_value
+        )
+        WHEN MATCHED THEN
+            UPDATE SET t.update_time = s.update_time
+        WHEN NOT MATCHED THEN
+            INSERT (id, registry_group, registry_key, registry_value, update_time)
+            VALUES (s.id, s.registry_group, s.registry_key, s.registry_value, s.update_time)
     </insert>
 
     <delete id="registryDelete">

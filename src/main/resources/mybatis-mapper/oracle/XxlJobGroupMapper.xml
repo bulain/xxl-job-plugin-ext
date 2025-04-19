@@ -22,15 +22,13 @@
     </sql>
 
     <select id="findAll" resultMap="XxlJobGroup">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_GROUP t
         ORDER BY t.APP_NAME, t.TITLE, t.ID ASC
     </select>
 
     <select id="findByAddressType" parameterType="java.lang.Integer" resultMap="XxlJobGroup">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_GROUP t
         WHERE t.ADDRESS_TYPE = #{addressType,jdbcType=NUMERIC}
         ORDER BY t.APP_NAME, t.TITLE, t.ID ASC
@@ -61,8 +59,7 @@
     </delete>
 
     <select id="load" parameterType="java.lang.Integer" resultMap="XxlJobGroup">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_GROUP t
         WHERE t.ID = #{id,jdbcType=NUMERIC}
     </select>
