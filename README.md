@@ -22,6 +22,31 @@ ls -al ./target/
 
 ```sh
 git clone https://github.com/xuxueli/xxl-job.git
+```
+
+调整打包方式为ZIP，修改文件 ./xxl-job/xxl-job-admin/pom.xml
+
+```xml
+<plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+    <version>${spring-boot.version}</version>
+    <configuration>
+        <layout>ZIP</layout>
+    </configuration>
+    <executions>
+        <execution>
+            <goals>
+                <goal>repackage</goal>
+            </goals>
+        </execution>
+    </executions>
+</plugin>
+```
+
+执行编译打包
+
+```sh
 cd xxl-job/
 mvn -Dmaven.test.skip=true clean package -U 
 echo "打包后的文件位于： ./xxl-job-admin/target/"
@@ -59,9 +84,10 @@ spring.datasource.password=******
 spring.datasource.driver-class-name=org.postgresql.Driver
 ```
 
-#### 3.3导入pgsql-schema.sql到PostgreSQL数据库
+#### 3.3导入tables_xxl_job.pgsql.sql到PostgreSQL数据库
 
 新建数据库（假如数据库名为xxl_job）：
+数据库初始化文件路径：./doc/db/tables_xxl_job.pgsql.sql
 
 ```sql
 create database xxl_job;
@@ -77,7 +103,7 @@ psql -U postgres -d xxl_job -f ./tables_xxl_job.pgsql.sql
 
 单机模式启动：
 
-```
+```shell
 cd xxl-job/
 java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-2.5.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
 ```
