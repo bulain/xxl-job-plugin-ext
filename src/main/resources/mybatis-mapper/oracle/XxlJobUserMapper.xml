@@ -48,8 +48,7 @@
     </select>
 
     <select id="loadByUserName" parameterType="java.util.HashMap" resultMap="XxlJobUser">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_USER t
         WHERE t.USERNAME = #{username,jdbcType=VARCHAR}
     </select>

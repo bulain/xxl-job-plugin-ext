@@ -39,17 +39,19 @@
         WHERE t.update_time <![CDATA[ > ]]> DATEADD(SECOND, -${timeout}, #{nowTime})
     </select>
 
-    <update id="registryUpdate" >
-        UPDATE xxl_job_registry
-        SET update_time = #{updateTime}
-        WHERE registry_group = #{registryGroup}
-          AND registry_key = #{registryKey}
-          AND registry_value = #{registryValue}
-    </update>
-
-    <insert id="registrySave" >
-        INSERT INTO xxl_job_registry( registry_group , registry_key , registry_value, update_time)
-        VALUES( #{registryGroup}, #{registryKey}, #{registryValue}, #{updateTime})
+    <insert id="registrySaveOrUpdate" >
+        MERGE INTO xxl_job_registry AS t
+        USING (VALUES (#{registryGroup}, #{registryKey}, #{registryValue}, #{updateTime})) AS s (registry_group, registry_key, registry_value, update_time)
+        ON (
+          t.registry_group = s.registry_group
+          AND t.registry_key = s.registry_key
+          AND t.registry_value = s.registry_value
+        )
+        WHEN MATCHED THEN
+          UPDATE SET t.update_time = s.update_time
+        WHEN NOT MATCHED THEN
+          INSERT (registry_group, registry_key, registry_value, update_time)
+          VALUES (s.registry_group, s.registry_key, s.registry_value, s.update_time);
         <selectKey resultType="java.lang.Integer" order="AFTER" keyProperty="id">
             SELECT @@IDENTITY
         </selectKey>

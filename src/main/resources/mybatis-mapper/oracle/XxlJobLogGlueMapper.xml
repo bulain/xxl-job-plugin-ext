@@ -48,8 +48,7 @@
     </insert>
 
     <select id="findByJobId" parameterType="java.lang.Integer" resultMap="XxlJobLogGlue">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_LOGGLUE t
         WHERE t.JOB_ID = #{jobId,jdbcType=NUMERIC}
         ORDER BY ID DESC

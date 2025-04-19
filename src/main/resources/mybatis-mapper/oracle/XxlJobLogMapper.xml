@@ -111,8 +111,7 @@
     </select>
 
     <select id="load" parameterType="java.lang.Long" resultMap="XxlJobLog">
-        SELECT
-        <include refid="Base_Column_List"/>
+        SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_LOG t
         WHERE t.ID = #{id,jdbcType=NUMERIC}
     </select>
@@ -165,18 +164,6 @@
         from XXL_JOB_LOG
         WHERE JOB_ID = #{jobId,jdbcType=NUMERIC}
     </delete>
-
-    <!--<select id="triggerCountByDay" resultType="java.util.Map" >
-        SELECT
-            DATE_FORMAT(trigger_time,'%Y-%m-%d') triggerDay,
-            COUNT(handle_code) triggerDayCount,
-            SUM(CASE WHEN (trigger_code in (0, 200) and handle_code = 0) then 1 else 0 end) as triggerDayCountRunning,
-            SUM(CASE WHEN handle_code = 200 then 1 else 0 end) as triggerDayCountSuc
-        FROM xxl_job_log
-        WHERE trigger_time BETWEEN #{from,jdbcType=DATE} and #{to,jdbcType=DATE}
-        GROUP BY triggerDay
-        ORDER BY triggerDay
-    </select>-->
 
     <select id="findLogReport" resultType="java.util.Map">
         SELECT COUNT(HANDLE_CODE)                                    triggerDayCount,
