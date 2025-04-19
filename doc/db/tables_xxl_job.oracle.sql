@@ -1,5 +1,5 @@
 ---#
----# XXL-JOB v2.5.0
+---# XXL-JOB v3.0.0
 ---# Copyright (c) 2015-present, xuxueli.
 
 CREATE TABLE XXL_JOB_INFO
