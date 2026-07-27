@@ -1,6 +1,6 @@
 # 简介
 
-xxl-job-plugin-ext 是xxl-job适配MSSQL,ORACLE,PGSQL,DM(达梦)数据源插件。
+xxl-job-plugin-ext 是xxl-job适配MSSQL,ORACLE,PGSQL,DM(达梦),KINGBASE(人大金仓)数据源插件。
 
 # 快速使用
 
@@ -249,5 +249,56 @@ cd xxl-job/
 java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-2.5.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
 ```
 
-# 7.许可证
+### 7.插件配置 - kingbase（人大金仓）
+
+#### 7.1配置
+
+在xxl-job安装目录下新建plugins目录，并将xxl-job-plugin-ext插件和驱动jar放入此目录,目录结构如下:
+
+```
+xxl-job/
+├── conf/
+│   ├── application.properties
+│   └── logback.xml
+├── plugins/
+│   ├── kingbase8-8.6.0.jar
+│   └── xxl-job-plugin-ext-2.5.0.jar
+└── xxl-job-admin-2.5.0.jar
+```
+
+#### 7.2配置数据库链接信息
+
+编辑conf/application.properties配置文件
+
+```properties
+### mybatis
+# PG 模式：复用 pgsql Mapper；Oracle 模式请改为 oracle
+mybatis.mapper-locations=classpath:/mybatis-mapper/pgsql/*Mapper.xml
+
+### datasource-pool
+spring.datasource.hikari.connection-test-query=SELECT 1
+
+### xxl-job, datasource
+spring.datasource.url=jdbc:kingbase8://127.0.0.1:54321/xxl_job
+spring.datasource.username=xxl_job
+spring.datasource.password=******
+spring.datasource.driver-class-name=com.kingbase8.Driver
+```
+
+> KingbaseES V8 需根据建库时设置的 `database_mode`（pg / oracle）选择对应的 Mapper 目录和建表脚本。PG 模式复用 pgsql，Oracle 模式复用 oracle。
+
+#### 7.3导入建表脚本到数据库
+
+PG 模式导入 `tables_xxl_job.pgsql.sql`，Oracle 模式导入 `tables_xxl_job.oracle.sql`。
+
+#### 7.4启动xxl-job-admin服务
+
+单机模式启动：
+
+```shell
+cd xxl-job/
+java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-2.5.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
+```
+
+# 8.许可证
 GNU GENERAL PUBLIC LICENSE
