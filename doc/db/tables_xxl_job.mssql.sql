@@ -1,640 +1,654 @@
----#
----# XXL-JOB v3.0.0
----# Copyright (c) 2015-present, xuxueli.
+--
+-- XXL-JOB
+-- Copyright (c) 2015-present, xuxueli.
+-- SQL Server 2012+
+--
 
-create table xxl_job_info
+IF DB_ID('xxl_job') IS NULL
+    CREATE DATABASE xxl_job;
+GO
+
+USE xxl_job;
+GO
+
+-- —————————————————————— job group and registry ——————————————————
+
+CREATE TABLE xxl_job_group
 (
-    id bigint identity(100,1) not null,
-    job_group bigint not null,
-    job_desc varchar (512) not null,
-    add_time        datetime,
-    update_time     datetime,
-    author varchar (125),
-    alarm_email varchar (512),
-    schedule_type varchar (100) default 'NONE' not null,
-    schedule_conf varchar (256),
-    misfire_strategy varchar (100) default 'DO_NOTHING' not null,
-    executor_route_strategy varchar (100),
-    executor_handler varchar (512),
-    executor_param varchar (1024),
-    executor_block_strategy varchar (100),
-    executor_timeout int default 0 not null,
-    executor_fail_retry_count int default 0 not null,
-    glue_type varchar (100) not null,
-    glue_source text,
-    glue_remark varchar (256),
-    glue_updatetime datetime,
-    child_jobid varchar (512),
-    trigger_status int default 0 not null,
-    trigger_last_time bigint default 0,
-    trigger_next_time bigint default 0,
-    primary key (id)
+    id           INT            NOT NULL IDENTITY(100,1),
+    app_name     NVARCHAR(64)   NOT NULL,
+    title        NVARCHAR(12)   NOT NULL,
+    address_type TINYINT        NOT NULL DEFAULT 0,
+    address_list NVARCHAR(MAX),
+    update_time  DATETIME2      DEFAULT NULL,
+    PRIMARY KEY (id)
 );
 
-create index idx_xxl_job_info_1 on xxl_job_info (job_group);
-
-exec sp_addextendedproperty
-    @level0type = N'schema', @level0name = 'dbo',
-    @level1type = N'table',  @level1name = N'xxl_job_info',
-   	@name = N'ms_description',@value = N'任务信息表'
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_group',
+    @name = N'ms_description', @value = N'执行器'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'id',
-    @name = N'ms_description', @value = N'任务主键ID'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'job_group',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_group',
+    @level2type = N'column', @level2name = N'id',
     @name = N'ms_description', @value = N'执行器主键ID'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'job_desc',
-    @name = N'ms_description', @value = N'任务描述'
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_group',
+    @level2type = N'column', @level2name = N'app_name',
+    @name = N'ms_description', @value = N'执行器AppName'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'add_time',
-    @name = N'ms_description', @value = N'创建时间'
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_group',
+    @level2type = N'column', @level2name = N'title',
+    @name = N'ms_description', @value = N'执行器名称'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'update_time',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_group',
+    @level2type = N'column', @level2name = N'address_type',
+    @name = N'ms_description', @value = N'执行器地址类型：0=自动注册、1=手动录入'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_group',
+    @level2type = N'column', @level2name = N'address_list',
+    @name = N'ms_description', @value = N'执行器地址列表，多地址逗号分隔'
+    ;
+
+CREATE TABLE xxl_job_registry
+(
+    id             INT           NOT NULL IDENTITY(100,1),
+    registry_group NVARCHAR(50)  NOT NULL,
+    registry_key   NVARCHAR(255) NOT NULL,
+    registry_value NVARCHAR(255) NOT NULL,
+    update_time    DATETIME2     DEFAULT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT i_g_k_v UNIQUE (registry_group, registry_key, registry_value)
+);
+
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_registry',
+    @name = N'ms_description', @value = N'客户端注册'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_registry',
+    @level2type = N'column', @level2name = N'id',
+    @name = N'ms_description', @value = N'注册主键ID'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_registry',
+    @level2type = N'column', @level2name = N'registry_group',
+    @name = N'ms_description', @value = N'注册组'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_registry',
+    @level2type = N'column', @level2name = N'registry_key',
+    @name = N'ms_description', @value = N'注册主键'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_registry',
+    @level2type = N'column', @level2name = N'registry_value',
+    @name = N'ms_description', @value = N'注册值'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_registry',
+    @level2type = N'column', @level2name = N'update_time',
     @name = N'ms_description', @value = N'更新时间'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'author',
+
+-- —————————————————————— job info ——————————————————
+
+CREATE TABLE xxl_job_info
+(
+    id                        INT            NOT NULL IDENTITY(100,1),
+    job_group                 INT            NOT NULL,
+    job_desc                  NVARCHAR(255)  NOT NULL,
+    add_time                  DATETIME2      DEFAULT NULL,
+    update_time               DATETIME2      DEFAULT NULL,
+    author                    NVARCHAR(64)   DEFAULT NULL,
+    alarm_email               NVARCHAR(255)  DEFAULT NULL,
+    schedule_type             NVARCHAR(50)   NOT NULL DEFAULT 'NONE',
+    schedule_conf             NVARCHAR(128)  DEFAULT NULL,
+    misfire_strategy          NVARCHAR(50)   NOT NULL DEFAULT 'DO_NOTHING',
+    executor_route_strategy   NVARCHAR(50)   DEFAULT NULL,
+    executor_handler          NVARCHAR(255)  DEFAULT NULL,
+    executor_param            NVARCHAR(512)  DEFAULT NULL,
+    executor_block_strategy   NVARCHAR(50)   DEFAULT NULL,
+    executor_timeout          INT            NOT NULL DEFAULT 0,
+    executor_fail_retry_count INT            NOT NULL DEFAULT 0,
+    glue_type                 NVARCHAR(50)   NOT NULL,
+    glue_source               NVARCHAR(MAX),
+    glue_remark               NVARCHAR(128)  DEFAULT NULL,
+    glue_updatetime           DATETIME2      DEFAULT NULL,
+    child_jobid               NVARCHAR(255)  DEFAULT NULL,
+    trigger_status            TINYINT        NOT NULL DEFAULT 0,
+    trigger_last_time         BIGINT         NOT NULL DEFAULT 0,
+    trigger_next_time         BIGINT         NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @name = N'ms_description', @value = N'任务信息表'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'id',
+    @name = N'ms_description', @value = N'任务主键ID'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'job_group',
+    @name = N'ms_description', @value = N'执行器主键ID'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'job_desc',
+    @name = N'ms_description', @value = N'任务描述'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'add_time',
+    @name = N'ms_description', @value = N'创建时间'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'update_time',
+    @name = N'ms_description', @value = N'更新时间'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'author',
     @name = N'ms_description', @value = N'作者'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'alarm_email',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'alarm_email',
     @name = N'ms_description', @value = N'报警邮件'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'schedule_type',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'schedule_type',
     @name = N'ms_description', @value = N'调度类型'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'schedule_conf',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'schedule_conf',
     @name = N'ms_description', @value = N'调度配置，值含义取决于调度类型'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'misfire_strategy',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'misfire_strategy',
     @name = N'ms_description', @value = N'调度过期策略'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'executor_route_strategy',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'executor_route_strategy',
     @name = N'ms_description', @value = N'执行器路由策略'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'executor_handler',
-    @name = N'ms_description', @value = N'执行器任务HANDLER'
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'executor_handler',
+    @name = N'ms_description', @value = N'执行器任务handler'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'executor_param',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'executor_param',
     @name = N'ms_description', @value = N'执行器任务参数'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'executor_block_strategy',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'executor_block_strategy',
     @name = N'ms_description', @value = N'阻塞处理策略'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'executor_timeout',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'executor_timeout',
     @name = N'ms_description', @value = N'任务执行超时时间，单位秒'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'executor_fail_retry_count',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'executor_fail_retry_count',
     @name = N'ms_description', @value = N'失败重试次数'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'glue_type',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'glue_type',
     @name = N'ms_description', @value = N'GLUE类型'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'glue_source',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'glue_source',
     @name = N'ms_description', @value = N'GLUE源代码'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'glue_remark',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'glue_remark',
     @name = N'ms_description', @value = N'GLUE备注'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'glue_updatetime',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'glue_updatetime',
     @name = N'ms_description', @value = N'GLUE更新时间'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'child_jobid',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'child_jobid',
     @name = N'ms_description', @value = N'子任务ID，多个逗号分隔'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'trigger_status',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'trigger_status',
     @name = N'ms_description', @value = N'调度状态：0-停止，1-运行'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'trigger_last_time',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'trigger_last_time',
     @name = N'ms_description', @value = N'上次调度时间'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_info',
-    @level2type = N'columN',  @level2name = 'trigger_next_time',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_info',
+    @level2type = N'column', @level2name = N'trigger_next_time',
     @name = N'ms_description', @value = N'下次调度时间'
     ;
 
-
-
-create table xxl_job_log
+CREATE TABLE xxl_job_logglue
 (
-    id bigint identity(100,1) not null,
-    job_group bigint not null,
-    job_id bigint not null,
-    executor_address varchar (512),
-    executor_handler varchar (512),
-    executor_param varchar (1024),
-    executor_sharding_param varchar (40),
-    executor_fail_retry_count int default 0 not null,
-    trigger_time datetime,
-    trigger_code int not null,
-    trigger_msg text,
-    handle_time  datetime,
-    handle_code int not null,
-    handle_msg text,
-    alarm_status int default 0 not null,
-    primary key (id)
+    id          INT           NOT NULL IDENTITY(100,1),
+    job_id      INT           NOT NULL,
+    glue_type   NVARCHAR(50)  DEFAULT NULL,
+    glue_source NVARCHAR(MAX),
+    glue_remark NVARCHAR(128) NOT NULL,
+    add_time    DATETIME2     DEFAULT NULL,
+    update_time DATETIME2     DEFAULT NULL,
+    PRIMARY KEY (id)
 );
 
-create index idx_xxl_job_log_1 on xxl_job_log (trigger_time);
-create index idx_xxl_job_log_2 on xxl_job_log (handle_code);
-create index idx_xxl_job_log_3 on xxl_job_log (job_id,job_group);
-create index idx_xxl_job_log_4 on xxl_job_log (job_id);
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @name = N'ms_description', @value = N'GLUE任务'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'id',
+    @name = N'ms_description', @value = N'GLUE主键ID'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'job_id',
+    @name = N'ms_description', @value = N'任务，主键ID'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'glue_type',
+    @name = N'ms_description', @value = N'GLUE类型'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'glue_source',
+    @name = N'ms_description', @value = N'GLUE源代码'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'glue_remark',
+    @name = N'ms_description', @value = N'GLUE备注'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'add_time',
+    @name = N'ms_description', @value = N'创建时间'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_logglue',
+    @level2type = N'column', @level2name = N'update_time',
+    @name = N'ms_description', @value = N'更新时间'
+    ;
 
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
+-- —————————————————————— job log and report ——————————————————
+
+CREATE TABLE xxl_job_log
+(
+    id                        BIGINT         NOT NULL IDENTITY(100,1),
+    job_group                 INT            NOT NULL,
+    job_id                    INT            NOT NULL,
+    executor_address          NVARCHAR(255)  DEFAULT NULL,
+    executor_handler          NVARCHAR(255)  DEFAULT NULL,
+    executor_param            NVARCHAR(512)  DEFAULT NULL,
+    executor_sharding_param   NVARCHAR(20)   DEFAULT NULL,
+    executor_fail_retry_count INT            NOT NULL DEFAULT 0,
+    trigger_time              DATETIME2      DEFAULT NULL,
+    trigger_code              INT            NOT NULL,
+    trigger_msg               NVARCHAR(MAX),
+    handle_time               DATETIME2      DEFAULT NULL,
+    handle_code               INT            NOT NULL,
+    handle_msg                NVARCHAR(MAX),
+    alarm_status              TINYINT        NOT NULL DEFAULT 0,
+    PRIMARY KEY (id)
+);
+
+CREATE INDEX I_trigger_time ON xxl_job_log (trigger_time);
+CREATE INDEX I_handle_code ON xxl_job_log (handle_code);
+CREATE INDEX I_jobid_jobgroup ON xxl_job_log (job_id, job_group);
+CREATE INDEX I_job_id ON xxl_job_log (job_id);
+
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
     @name = N'ms_description', @value = N'调度日志'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'id',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'id',
     @name = N'ms_description', @value = N'调度主键ID'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'job_group',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'job_group',
     @name = N'ms_description', @value = N'执行器主键ID'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'job_id',
-    @name = N'ms_description', @value = N'任务主键ID'
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'job_id',
+    @name = N'ms_description', @value = N'任务，主键ID'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'executor_address',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'executor_address',
     @name = N'ms_description', @value = N'执行器地址，本次执行的地址'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'executor_handler',
-    @name = N'ms_description', @value = N'执行器任务HANDLER'
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'executor_handler',
+    @name = N'ms_description', @value = N'执行器任务handler'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'executor_param',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'executor_param',
     @name = N'ms_description', @value = N'执行器任务参数'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'executor_sharding_param',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'executor_sharding_param',
     @name = N'ms_description', @value = N'执行器任务分片参数，格式如 1/2'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'executor_fail_retry_count',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'executor_fail_retry_count',
     @name = N'ms_description', @value = N'失败重试次数'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'trigger_time',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'trigger_time',
     @name = N'ms_description', @value = N'调度-时间'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'trigger_code',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'trigger_code',
     @name = N'ms_description', @value = N'调度-结果'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'trigger_msg',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'trigger_msg',
     @name = N'ms_description', @value = N'调度-日志'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'handle_time',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'handle_time',
     @name = N'ms_description', @value = N'执行-时间'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'handle_code',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'handle_code',
     @name = N'ms_description', @value = N'执行-状态'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'handle_msg',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'handle_msg',
     @name = N'ms_description', @value = N'执行-日志'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log',
-    @level2type = N'columN',  @level2name = 'alarm_status',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log',
+    @level2type = N'column', @level2name = N'alarm_status',
     @name = N'ms_description', @value = N'告警状态：0-默认、1-无需告警、2-告警成功、3-告警失败'
     ;
 
-
-create table xxl_job_log_report
+CREATE TABLE xxl_job_log_report
 (
-    id bigint identity(100,1) not null,
-    trigger_day datetime,
-    running_count int default 0 not null,
-    suc_count int default 0 not null,
-    fail_count int default 0 not null,
-    update_time datetime,
-    primary key (id)
+    id            INT       NOT NULL IDENTITY(100,1),
+    trigger_day   DATETIME2 DEFAULT NULL,
+    running_count INT       NOT NULL DEFAULT 0,
+    suc_count     INT       NOT NULL DEFAULT 0,
+    fail_count    INT       NOT NULL DEFAULT 0,
+    update_time   DATETIME2 DEFAULT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT i_trigger_day UNIQUE (trigger_day)
 );
 
-create unique index idx_xxl_job_log_report_1 on xxl_job_log_report (trigger_day);
-
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
     @name = N'ms_description', @value = N'调度报告'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
-    @level2type = N'columN',  @level2name = 'id',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
+    @level2type = N'column', @level2name = N'id',
     @name = N'ms_description', @value = N'调度报告主键ID'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
-    @level2type = N'columN',  @level2name = 'trigger_day',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
+    @level2type = N'column', @level2name = N'trigger_day',
     @name = N'ms_description', @value = N'调度-时间'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
-    @level2type = N'columN',  @level2name = 'running_count',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
+    @level2type = N'column', @level2name = N'running_count',
     @name = N'ms_description', @value = N'运行中-日志数量'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
-    @level2type = N'columN',  @level2name = 'suc_count',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
+    @level2type = N'column', @level2name = N'suc_count',
     @name = N'ms_description', @value = N'执行成功-日志数量'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
-    @level2type = N'columN',  @level2name = 'fail_count',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
+    @level2type = N'column', @level2name = N'fail_count',
     @name = N'ms_description', @value = N'执行失败-日志数量'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_log_report',
-    @level2type = N'columN',  @level2name = 'update_time',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_log_report',
+    @level2type = N'column', @level2name = N'update_time',
     @name = N'ms_description', @value = N'更新时间'
     ;
 
-create table xxl_job_logglue
+-- —————————————————————— lock ——————————————————
+
+CREATE TABLE xxl_job_lock
 (
-    id bigint identity(100,1) not null,
-    job_id bigint not null,
-    glue_type varchar (100),
-    glue_source text,
-    glue_remark varchar (256) not null,
-    add_time    datetime,
-    update_time datetime,
-    primary key (id)
+    lock_name NVARCHAR(50) NOT NULL,
+    PRIMARY KEY (lock_name)
 );
 
-create index idx_xxl_job_logglue_1 on xxl_job_logglue (job_id);
-
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @name = N'ms_description', @value = N'GLUE任务'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'id',
-    @name = N'ms_description', @value = N'GLUE主键ID'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'job_id',
-    @name = N'ms_description', @value = N'任务主键ID'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'glue_type',
-    @name = N'ms_description', @value = N'GLUE类型'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'glue_source',
-    @name = N'ms_description', @value = N'GLUE源代码'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'glue_remark',
-    @name = N'ms_description', @value = N'GLUE备注'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'add_time',
-    @name = N'ms_description', @value = N'创建时间'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_logglue',
-    @level2type = N'columN',  @level2name = 'update_time',
-    @name = N'ms_description', @value = N'更新时间'
-    ;
-
-create table xxl_job_registry
-(
-    id bigint identity(100,1) not null,
-    registry_group varchar (100) not null,
-    registry_key varchar (512) not null,
-    registry_value varchar (512) not null,
-    update_time datetime,
-    primary key (id)
-);
-
-create unique index idx_xxl_job_registry_1 on xxl_job_registry (registry_group, registry_key, registry_value);
-
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_registry',
-    @name = N'ms_description', @value = N'客户端注册'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_registry',
-    @level2type = N'columN',  @level2name = 'id',
-    @name = N'ms_description', @value = N'注册主键ID'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_registry',
-    @level2type = N'columN',  @level2name = 'registry_group',
-    @name = N'ms_description', @value = N'注册组'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_registry',
-    @level2type = N'columN',  @level2name = 'registry_key',
-    @name = N'ms_description', @value = N'注册主键'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_registry',
-    @level2type = N'columN',  @level2name = 'registry_value',
-    @name = N'ms_description', @value = N'注册值'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_registry',
-    @level2type = N'columN',  @level2name = 'update_time',
-    @name = N'ms_description', @value = N'更新时间'
-    ;
-
-create table xxl_job_group
-(
-    id bigint identity(100,1) not null,
-    app_name varchar (128) not null,
-    title varchar (128) not null,
-    address_type int default 0 not null,
-    address_list varchar (4000),
-    update_time datetime,
-    primary key (id)
-);
-
-
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @name = N'ms_description', @value = N'执行器'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @level2type = N'columN',  @level2name = 'id',
-    @name = N'ms_description', @value = N'执行器主键ID'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @level2type = N'columN',  @level2name = 'app_name',
-    @name = N'ms_description', @value = N'执行器APPNAME'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @level2type = N'columN',  @level2name = 'title',
-    @name = N'ms_description', @value = N'执行器名称'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @level2type = N'columN',  @level2name = 'address_type',
-    @name = N'ms_description', @value = N'执行器地址类型：0=自动注册、1=手动录入'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @level2type = N'columN',  @level2name = 'address_list',
-    @name = N'ms_description', @value = N'执行器地址列表，多地址逗号分隔'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_group',
-    @level2type = N'columN',  @level2name = 'update_time',
-    @name = N'ms_description', @value = N'更新时间'
-    ;
-
-
-create table xxl_job_user
-(
-    id bigint identity(100,1) not null,
-    username varchar (100) not null,
-    password varchar (600) not null,
-    role int not null,
-    permission varchar (512),
-    primary key (id)
-);
-
-create unique index idx_xxl_job_user_1 on xxl_job_user (username);
-
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_user',
-    @name = N'ms_description', @value = N'用户账号'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_user',
-    @level2type = N'columN',  @level2name = 'id',
-    @name = N'ms_description', @value = N'用户主键ID'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_user',
-    @level2type = N'columN',  @level2name = 'username',
-    @name = N'ms_description', @value = N'账号'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_user',
-    @level2type = N'columN',  @level2name = 'password',
-    @name = N'ms_description', @value = N'密码'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_user',
-    @level2type = N'columN',  @level2name = 'role',
-    @name = N'ms_description', @value = N'角色：0-普通用户、1-管理员'
-    ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_user',
-    @level2type = N'columN',  @level2name = 'permissioN',
-    @name = N'ms_description', @value = N'权限：执行器ID列表，多个逗号分割'
-    ;
-
-
-create table xxl_job_lock
-(
-    lock_name varchar (100) not null,
-    primary key (lock_name)
-);
-
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_lock',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_lock',
     @name = N'ms_description', @value = N'并发锁'
     ;
-exec sys.sp_addextendedproperty
-    @level0type = N'schema',  @level0name = N'dbo',
-    @level1type = N'table',  @level1name = 'xxl_job_lock',
-    @level2type = N'columN',  @level2name = 'lock_name',
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_lock',
+    @level2type = N'column', @level2name = N'lock_name',
     @name = N'ms_description', @value = N'锁名称'
     ;
 
-set identity_insert XXL_JOB_GROUP on;
+-- —————————————————————— user ——————————————————
 
-INSERT INTO XXL_JOB_GROUP(ID, APP_NAME, TITLE, ADDRESS_TYPE, ADDRESS_LIST, UPDATE_TIME)
-VALUES (1, 'xxl-job-executor-sample', '示例执行器', 0, NULL, convert(datetime,'2018-11-03 22:21:31'));
+CREATE TABLE xxl_job_user
+(
+    id         INT            NOT NULL IDENTITY(100,1),
+    username   NVARCHAR(50)   NOT NULL,
+    password   NVARCHAR(100)  NOT NULL,
+    token      NVARCHAR(100)  DEFAULT NULL,
+    role       TINYINT        NOT NULL,
+    permission NVARCHAR(255)  DEFAULT NULL,
+    PRIMARY KEY (id),
+    CONSTRAINT i_username UNIQUE (username)
+);
 
-set identity_insert XXL_JOB_GROUP off;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @name = N'ms_description', @value = N'用户账号'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @level2type = N'column', @level2name = N'id',
+    @name = N'ms_description', @value = N'用户主键ID'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @level2type = N'column', @level2name = N'username',
+    @name = N'ms_description', @value = N'账号'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @level2type = N'column', @level2name = N'password',
+    @name = N'ms_description', @value = N'密码加密信息'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @level2type = N'column', @level2name = N'token',
+    @name = N'ms_description', @value = N'登录token'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @level2type = N'column', @level2name = N'role',
+    @name = N'ms_description', @value = N'角色：0-普通用户、1-管理员'
+    ;
+EXEC sys.sp_addextendedproperty
+    @level0type = N'schema', @level0name = N'dbo',
+    @level1type = N'table',  @level1name = N'xxl_job_user',
+    @level2type = N'column', @level2name = N'permission',
+    @name = N'ms_description', @value = N'权限：执行器ID列表，多个逗号分割'
+    ;
 
-set identity_insert XXL_JOB_INFO on;
+-- —————————————————————— for default data ——————————————————
 
-INSERT INTO XXL_JOB_INFO(ID, JOB_GROUP, JOB_DESC,
-                           ADD_TIME, UPDATE_TIME,
-                           AUTHOR, ALARM_EMAIL,
-                           SCHEDULE_TYPE, SCHEDULE_CONF,
-                           MISFIRE_STRATEGY, EXECUTOR_ROUTE_STRATEGY,
-                           EXECUTOR_HANDLER, EXECUTOR_PARAM,
-                           EXECUTOR_BLOCK_STRATEGY,
-                           EXECUTOR_TIMEOUT, EXECUTOR_FAIL_RETRY_COUNT,
-                           GLUE_TYPE, GLUE_SOURCE, GLUE_REMARK,
-                           GLUE_UPDATETIME,
-                           CHILD_JOBID)
-VALUES (1, 1, '测试任务1',
-        convert(datetime,'2018-11-03 22:21:31'),
-        convert(datetime,'2018-11-03 22:21:31'),
-        'XXL', '',
-        'CRON', '0 0 0 * * ? *',
-        'DO_NOTHING', 'FIRST',
-        'demoJobHandler', '',
-        'SERIAL_EXECUTION', 0, 0,
-        'BEAN', '', 'GLUE代码初始化',
-        convert(datetime,'2018-11-03 22:21:31'),
-        '');
+SET IDENTITY_INSERT xxl_job_group ON;
 
-set identity_insert XXL_JOB_INFO off;
+INSERT INTO xxl_job_group(id, app_name, title, address_type, address_list, update_time)
+VALUES (1, 'xxl-job-executor-sample', '通用执行器Sample', 0, NULL, GETDATE()),
+       (2, 'xxl-job-executor-sample-ai', 'AI执行器Sample', 0, NULL, GETDATE());
 
-set identity_insert XXL_JOB_USER on;
+SET IDENTITY_INSERT xxl_job_group OFF;
 
-INSERT INTO XXL_JOB_USER(ID, USERNAME, PASSWORD, ROLE, PERMISSION)
-VALUES (1, 'admiN', 'e10adc3949ba59abbe56e057f20f883e', 1, NULL);
+SET IDENTITY_INSERT xxl_job_info ON;
 
-set identity_insert XXL_JOB_USER off;
+INSERT INTO xxl_job_info(id, job_group, job_desc, add_time, update_time, author, alarm_email,
+                         schedule_type, schedule_conf, misfire_strategy, executor_route_strategy,
+                         executor_handler, executor_param, executor_block_strategy, executor_timeout,
+                         executor_fail_retry_count, glue_type, glue_source, glue_remark, glue_updatetime,
+                         child_jobid)
+VALUES (1, 1, '示例任务01', GETDATE(), GETDATE(), 'XXL', '', 'CRON', '0 0 0 * * ? *',
+        'DO_NOTHING', 'FIRST', 'demoJobHandler', '', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化',
+        GETDATE(), ''),
+       (2, 2, 'Ollama示例任务01', GETDATE(), GETDATE(), 'XXL', '', 'NONE', '',
+        'DO_NOTHING', 'FIRST', 'ollamaJobHandler', '{
+    "input": "慢SQL问题分析思路",
+    "prompt": "你是一个研发工程师，擅长解决技术类问题。",
+    "model": "qwen3:0.6b"
+}', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化',
+        GETDATE(), ''),
+       (3, 2, 'Dify示例任务', GETDATE(), GETDATE(), 'XXL', '', 'NONE', '',
+        'DO_NOTHING', 'FIRST', 'difyWorkflowJobHandler', '{
+    "inputs":{
+        "input":"查询班级各学科前三名"
+    },
+    "user": "xxl-job",
+    "baseUrl": "http://localhost/v1",
+    "apiKey": "app-OUVgNUOQRIMokfmuJvBJoUTN"
+}', 'SERIAL_EXECUTION', 0, 0, 'BEAN', '', 'GLUE代码初始化',
+        GETDATE(), '');
 
-INSERT INTO XXL_JOB_LOCK (LOCK_NAME)
+SET IDENTITY_INSERT xxl_job_info OFF;
+
+SET IDENTITY_INSERT xxl_job_user ON;
+
+INSERT INTO xxl_job_user(id, username, password, role, permission)
+VALUES (1, 'admin', '8d969eef6ecad3c29a3a629280e686cf0c3f5d5a86aff3ca12020c923adc6c92', 1, NULL);
+
+SET IDENTITY_INSERT xxl_job_user OFF;
+
+INSERT INTO xxl_job_lock (lock_name)
 VALUES ('schedule_lock');
 
+COMMIT;

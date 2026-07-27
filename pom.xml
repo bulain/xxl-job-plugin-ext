@@ -3,7 +3,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>com.bulain.xxljob</groupId>
 	<artifactId>xxl-job-plugin-ext</artifactId>
-	<version>3.0.0</version>
+	<version>3.3.2</version>
 
 	<name>${project.artifactId}</name>
 	<description>Adapt xxl-job support mssql, oracle, pgsql.</description>

@@ -67,8 +67,8 @@ xxl-job/
 ├── plugins/
 │   ├── checker-qual-3.48.3.jar
 │   ├── postgresql-42.7.5.jar
-│   └── xxl-job-plugin-ext-3.0.0.jar
-└── xxl-job-admin-3.0.0.jar
+│   └── xxl-job-plugin-ext-3.3.2.jar
+└── xxl-job-admin-3.3.2.jar
 ```
 
 #### 3.2配置数据库链接信息
@@ -77,7 +77,7 @@ xxl-job/
 
 ```properties
 ### mybatis
-mybatis.mapper-locations=classpath:/mybatis-mapper/pgsql/*Mapper.xml
+mybatis.mapper-locations=classpath:/mapper/pgsql/*Mapper.xml
 
 ### datasource-pool
 spring.datasource.hikari.connection-test-query=SELECT 1
@@ -99,7 +99,7 @@ spring.datasource.driver-class-name=org.postgresql.Driver
 
 ```shell
 cd xxl-job/
-java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-3.0.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
+java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-3.3.2.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
 ```
 
 
@@ -116,8 +116,8 @@ xxl-job/
 │   └── logback.xml
 ├── plugins/
 │   ├── mssql-jdbc-12.8.1.jre11.jar
-│   └── xxl-job-plugin-ext-3.0.0.jar
-└── xxl-job-admin-3.0.0.jar
+│   └── xxl-job-plugin-ext-3.3.2.jar
+└── xxl-job-admin-3.3.2.jar
 ```
 
 #### 4.2配置数据库链接信息
@@ -126,7 +126,7 @@ xxl-job/
 
 ```properties
 ### mybatis
-mybatis.mapper-locations=classpath:/mybatis-mapper/mssql/*Mapper.xml
+mybatis.mapper-locations=classpath:/mapper/mssql/*Mapper.xml
 
 ### datasource-pool
 spring.datasource.hikari.connection-test-query=SELECT 1
@@ -148,7 +148,7 @@ spring.datasource.driver-class-name=com.microsoft.sqlserver.jdbc.SQLServerDriver
 
 ```shell
 cd xxl-job/
-java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-3.0.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
+java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-3.3.2.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
 ```
 
 ### 5.插件配置 - oracle
@@ -164,8 +164,8 @@ xxl-job/
 │   └── logback.xml
 ├── plugins/
 │   ├── ojdbc8-23.5.0.24.07.jar
-│   └── xxl-job-plugin-ext-3.0.0.jar
-└── xxl-job-admin-3.0.0.jar
+│   └── xxl-job-plugin-ext-3.3.2.jar
+└── xxl-job-admin-3.3.2.jar
 ```
 
 #### 5.2配置数据库链接信息
@@ -174,7 +174,7 @@ xxl-job/
 
 ```properties
 ### mybatis
-mybatis.mapper-locations=classpath:/mybatis-mapper/oracle/*Mapper.xml
+mybatis.mapper-locations=classpath:/mapper/oracle/*Mapper.xml
 
 ### datasource-pool
 spring.datasource.hikari.connection-test-query=SELECT 1 FROM DUAL
@@ -196,7 +196,7 @@ spring.datasource.driver-class-name=oracle.jdbc.OracleDriver
 
 ```shell
 cd xxl-job/
-java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-3.0.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
+java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-3.3.2.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
 ```
 
 # 6.许可证
