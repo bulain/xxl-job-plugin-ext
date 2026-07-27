@@ -6,7 +6,7 @@
 	<version>2.5.0</version>
 
 	<name>${project.artifactId}</name>
-	<description>Adapt xxl-job support mssql, oracle, pgsql.</description>
+	<description>Adapt xxl-job support mssql, oracle, pgsql, dmsql.</description>
 	<url>https://github.com/bulain/nacos-datasource-plugin-ext</url>
 
 	<properties>

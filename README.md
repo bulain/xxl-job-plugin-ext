@@ -1,6 +1,6 @@
 # 简介
 
-xxl-job-plugin-ext 是xxl-job适配MSSQL,ORACLE,PGSQL数据源插件。
+xxl-job-plugin-ext 是xxl-job适配MSSQL,ORACLE,PGSQL,DM(达梦)数据源插件。
 
 # 快速使用
 
@@ -199,5 +199,55 @@ cd xxl-job/
 java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-2.5.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
 ```
 
-# 6.许可证
+### 6.插件配置 - dm（达梦）
+
+#### 6.1配置
+
+在xxl-job安装目录下新建plugins目录，并将xxl-job-plugin-ext插件和驱动jar放入此目录,目录结构如下:
+
+```
+xxl-job/
+├── conf/
+│   ├── application.properties
+│   └── logback.xml
+├── plugins/
+│   ├── DmJdbcDriver18-8.1.3.jar
+│   └── xxl-job-plugin-ext-2.5.0.jar
+└── xxl-job-admin-2.5.0.jar
+```
+
+#### 6.2配置数据库链接信息
+
+编辑conf/application.properties配置文件
+
+```properties
+### mybatis
+mybatis.mapper-locations=classpath:/mybatis-mapper/oracle/*Mapper.xml
+
+### datasource-pool
+spring.datasource.hikari.connection-test-query=SELECT 1
+
+### xxl-job, datasource
+spring.datasource.url=jdbc:dm://127.0.0.1:5236/xxl_job
+spring.datasource.username=xxl_job
+spring.datasource.password=******
+spring.datasource.driver-class-name=dm.jdbc.driver.DmDriver
+```
+
+> 达梦需以 Oracle 兼容模式（COMPATIBLE_MODE=2）创建实例。Mapper 复用 oracle 目录，无需单独的 dmsql Mapper。
+
+#### 6.3导入tables_xxl_job.dmsql.sql到达梦数据库
+
+新建数据库（假如数据库名为xxl_job），执行数据库初始化文件./doc/db/tables_xxl_job.dmsql.sql
+
+#### 6.4启动xxl-job-admin服务
+
+单机模式启动：
+
+```shell
+cd xxl-job/
+java -Xmx2048m -Dloader.path=./plugins/ -jar xxl-job-admin-2.5.0.jar --spring.config.location=file:./conf/application.properties --logging.config=file:./conf/logback.xml
+```
+
+# 7.许可证
 GNU GENERAL PUBLIC LICENSE
