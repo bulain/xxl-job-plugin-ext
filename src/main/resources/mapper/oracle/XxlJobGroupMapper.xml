@@ -92,15 +92,8 @@
     <select id="findList" parameterType="java.util.HashMap" resultMap="XxlJobGroup">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_GROUP t
-        <where>
-            <if test="appname != null and appname != ''">
-                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname}), '%')
-            </if>
-            <if test="title != null and title != ''">
-                AND t.TITLE like CONCAT(CONCAT('%', #{title}), '%')
-            </if>
-        </where>
-        ORDER BY t.APP_NAME, t.TITLE, t.ID ASC
+        WHERE t.app_name = #{appname}
+        ORDER BY t.id ASC
     </select>
 
 </mapper>
