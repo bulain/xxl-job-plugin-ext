@@ -13,7 +13,7 @@ CREATE TABLE xxl_job_group
     title        VARCHAR(12)  NOT NULL,
     address_type INT          DEFAULT 0 NOT NULL,
     address_list VARCHAR(4000),
-    update_time  DATETIME(0),
+    update_time  TIMESTAMP,
     PRIMARY KEY (id)
 );
 
@@ -31,7 +31,7 @@ CREATE TABLE xxl_job_registry
     registry_group VARCHAR(50)  NOT NULL,
     registry_key   VARCHAR(255) NOT NULL,
     registry_value VARCHAR(255) NOT NULL,
-    update_time    DATETIME(0),
+    update_time    TIMESTAMP,
     PRIMARY KEY (id)
 );
 
@@ -51,8 +51,8 @@ CREATE TABLE xxl_job_info
     id                        INT          IDENTITY(100, 1) NOT NULL,
     job_group                 INT          NOT NULL,
     job_desc                  VARCHAR(255) NOT NULL,
-    add_time                  DATETIME(0),
-    update_time               DATETIME(0),
+    add_time                  TIMESTAMP,
+    update_time               TIMESTAMP,
     author                    VARCHAR(64),
     alarm_email               VARCHAR(255),
     schedule_type             VARCHAR(50)  DEFAULT 'NONE' NOT NULL,
@@ -67,7 +67,7 @@ CREATE TABLE xxl_job_info
     glue_type                 VARCHAR(50)  NOT NULL,
     glue_source               CLOB,
     glue_remark               VARCHAR(128),
-    glue_updatetime           DATETIME(0),
+    glue_updatetime           TIMESTAMP,
     child_jobid               VARCHAR(255),
     trigger_status            INT          DEFAULT 0 NOT NULL,
     trigger_last_time         BIGINT       DEFAULT 0 NOT NULL,
@@ -108,8 +108,8 @@ CREATE TABLE xxl_job_logglue
     glue_type   VARCHAR(50),
     glue_source CLOB,
     glue_remark VARCHAR(128) NOT NULL,
-    add_time    DATETIME(0),
-    update_time DATETIME(0),
+    add_time    TIMESTAMP,
+    update_time TIMESTAMP,
     PRIMARY KEY (id)
 );
 
@@ -134,10 +134,10 @@ CREATE TABLE xxl_job_log
     executor_param            VARCHAR(512),
     executor_sharding_param   VARCHAR(20),
     executor_fail_retry_count INT          DEFAULT 0 NOT NULL,
-    trigger_time              DATETIME(0),
+    trigger_time              TIMESTAMP,
     trigger_code              INT          NOT NULL,
     trigger_msg               CLOB,
-    handle_time               DATETIME(0),
+    handle_time               TIMESTAMP,
     handle_code               INT          NOT NULL,
     handle_msg                CLOB,
     alarm_status              INT          DEFAULT 0 NOT NULL,
@@ -169,11 +169,11 @@ COMMENT ON COLUMN xxl_job_log.alarm_status IS '告警状态：0-默认、1-无�
 CREATE TABLE xxl_job_log_report
 (
     id            INT IDENTITY(100, 1) NOT NULL,
-    trigger_day   DATETIME(0),
+    trigger_day   TIMESTAMP,
     running_count INT DEFAULT 0 NOT NULL,
     suc_count     INT DEFAULT 0 NOT NULL,
     fail_count    INT DEFAULT 0 NOT NULL,
-    update_time   DATETIME(0),
+    update_time   TIMESTAMP,
     PRIMARY KEY (id)
 );
 
