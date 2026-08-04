@@ -26,10 +26,10 @@
         FROM XXL_JOB_USER t
         <where>
             <if test="username != null and username != ''">
-                AND t.USERNAME like CONCAT(CONCAT('%', #{username,jdbcType=VARCHAR}), '%')
+                AND t.USERNAME like CONCAT(CONCAT('%', #{username}), '%')
             </if>
             <if test="role gt -1">
-                AND t.ROLE = #{role,jdbcType=NUMERIC}
+                AND t.ROLE = #{role}
             </if>
         </where>
         ORDER BY USERNAME ASC
@@ -41,10 +41,10 @@
         FROM XXL_JOB_USER t
         <where>
             <if test="username != null and username != ''">
-                AND t.USERNAME like CONCAT(CONCAT('%', #{username,jdbcType=VARCHAR}), '%')
+                AND t.USERNAME like CONCAT(CONCAT('%', #{username}), '%')
             </if>
             <if test="role gt -1">
-                AND t.ROLE = #{role,jdbcType=NUMERIC}
+                AND t.ROLE = #{role}
             </if>
         </where>
     </select>
@@ -52,13 +52,13 @@
     <select id="loadByUserName" parameterType="java.util.HashMap" resultMap="XxlJobUser">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_USER t
-        WHERE t.USERNAME = #{username,jdbcType=VARCHAR}
+        WHERE t.USERNAME = #{username}
     </select>
 
     <select id="loadById" parameterType="java.util.HashMap" resultMap="XxlJobUser">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_USER t
-        WHERE t.ID = #{id,jdbcType=NUMERIC}
+        WHERE t.ID = #{id}
     </select>
 
     <insert id="save" parameterType="com.xxl.job.admin.model.XxlJobUser" useGeneratedKeys="true" keyProperty="id" keyColumn="ID">
@@ -68,10 +68,10 @@
         ROLE,
         PERMISSION
         ) VALUES (
-        #{username,jdbcType=VARCHAR},
-        #{password,jdbcType=VARCHAR},
-        #{role,jdbcType=NUMERIC},
-        #{permission,jdbcType=VARCHAR}
+        #{username},
+        #{password},
+        #{role},
+        #{permission}
         )
     </insert>
 
@@ -79,23 +79,23 @@
         UPDATE XXL_JOB_USER
         SET
         <if test="password != null and password != ''">
-            PASSWORD = #{password,jdbcType=VARCHAR},
+            PASSWORD = #{password},
         </if>
-        ROLE = #{role,jdbcType=NUMERIC},
-        PERMISSION = #{permission,jdbcType=VARCHAR}
-        WHERE ID = #{id,jdbcType=NUMERIC}
+        ROLE = #{role},
+        PERMISSION = #{permission}
+        WHERE ID = #{id}
     </update>
 
     <delete id="delete" parameterType="java.util.HashMap">
         DELETE
         FROM XXL_JOB_USER
-        WHERE ID = #{id,jdbcType=NUMERIC}
+        WHERE ID = #{id}
     </delete>
 
     <update id="updateToken" parameterType="java.util.HashMap">
         UPDATE XXL_JOB_USER
-        SET TOKEN = #{token,jdbcType=VARCHAR}
-        WHERE ID = #{id,jdbcType=NUMERIC}
+        SET TOKEN = #{token}
+        WHERE ID = #{id}
     </update>
 
 </mapper>

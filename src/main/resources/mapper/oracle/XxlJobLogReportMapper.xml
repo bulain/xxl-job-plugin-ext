@@ -23,10 +23,10 @@
         MERGE INTO XXL_JOB_LOG_REPORT t
         USING (
             SELECT
-            #{triggerDay,jdbcType=DATE} AS TRIGGER_DAY,
-            #{runningCount,jdbcType=NUMERIC} AS RUNNING_COUNT,
-            #{sucCount,jdbcType=NUMERIC} AS SUC_COUNT,
-            #{failCount,jdbcType=NUMERIC} AS FAIL_COUNT
+            #{triggerDay} AS TRIGGER_DAY,
+            #{runningCount} AS RUNNING_COUNT,
+            #{sucCount} AS SUC_COUNT,
+            #{failCount} AS FAIL_COUNT
             FROM DUAL
         ) s
         ON (t.TRIGGER_DAY = s.TRIGGER_DAY)
@@ -43,7 +43,7 @@
     <select id="queryLogReport" resultMap="XxlJobLogReport">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_LOG_REPORT t
-        WHERE t.TRIGGER_DAY between #{triggerDayFrom,jdbcType=DATE} and #{triggerDayTo,jdbcType=DATE}
+        WHERE t.TRIGGER_DAY between #{triggerDayFrom} and #{triggerDayTo}
         ORDER BY t.TRIGGER_DAY ASC
     </select>
 

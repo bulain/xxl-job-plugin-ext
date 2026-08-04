@@ -30,35 +30,35 @@
     <select id="findByAddressType" parameterType="java.lang.Integer" resultMap="XxlJobGroup">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_GROUP t
-        WHERE t.ADDRESS_TYPE = #{addressType,jdbcType=NUMERIC}
+        WHERE t.ADDRESS_TYPE = #{addressType}
         ORDER BY t.APP_NAME, t.TITLE, t.ID ASC
     </select>
 
     <insert id="save" parameterType="com.xxl.job.admin.model.XxlJobGroup" useGeneratedKeys="true" keyProperty="id" keyColumn="ID">
         INSERT INTO XXL_JOB_GROUP (APP_NAME, TITLE, ADDRESS_TYPE, ADDRESS_LIST, UPDATE_TIME)
-        values ( #{appname,jdbcType=VARCHAR}, #{title,jdbcType=VARCHAR}, #{addressType,jdbcType=NUMERIC}, #{addressList,jdbcType=VARCHAR}, #{updateTime,jdbcType=DATE} )
+        values ( #{appname}, #{title}, #{addressType}, #{addressList}, #{updateTime} )
     </insert>
 
     <update id="update" parameterType="com.xxl.job.admin.model.XxlJobGroup">
         UPDATE XXL_JOB_GROUP
-        SET APP_NAME     = #{appname,jdbcType=VARCHAR},
-            TITLE        = #{title,jdbcType=VARCHAR},
-            ADDRESS_TYPE = #{addressType,jdbcType=NUMERIC},
-            ADDRESS_LIST = #{addressList,jdbcType=VARCHAR},
-            UPDATE_TIME  = #{updateTime,jdbcType=DATE}
-        WHERE ID = #{id,jdbcType=NUMERIC}
+        SET APP_NAME     = #{appname},
+            TITLE        = #{title},
+            ADDRESS_TYPE = #{addressType},
+            ADDRESS_LIST = #{addressList},
+            UPDATE_TIME  = #{updateTime}
+        WHERE ID = #{id}
     </update>
 
     <delete id="remove" parameterType="java.lang.Integer">
         DELETE
         FROM XXL_JOB_GROUP
-        WHERE ID = #{id,jdbcType=NUMERIC}
+        WHERE ID = #{id}
     </delete>
 
     <select id="load" parameterType="java.lang.Integer" resultMap="XxlJobGroup">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_GROUP t
-        WHERE t.ID = #{id,jdbcType=NUMERIC}
+        WHERE t.ID = #{id}
     </select>
 
     <select id="pageList" parameterType="java.util.HashMap" resultMap="XxlJobGroup">
@@ -66,10 +66,10 @@
         FROM XXL_JOB_GROUP t
         <where>
             <if test="appname != null and appname != ''">
-                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname,jdbcType=VARCHAR}), '%')
+                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname}), '%')
             </if>
             <if test="title != null and title != ''">
-                AND t.TITLE like CONCAT(CONCAT('%', #{title,jdbcType=VARCHAR}), '%')
+                AND t.TITLE like CONCAT(CONCAT('%', #{title}), '%')
             </if>
         </where>
         ORDER BY t.APP_NAME, t.TITLE, t.ID ASC
@@ -81,10 +81,10 @@
         FROM XXL_JOB_GROUP t
         <where>
             <if test="appname != null and appname != ''">
-                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname,jdbcType=VARCHAR}), '%')
+                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname}), '%')
             </if>
             <if test="title != null and title != ''">
-                AND t.TITLE like CONCAT(CONCAT('%', #{title,jdbcType=VARCHAR}), '%')
+                AND t.TITLE like CONCAT(CONCAT('%', #{title}), '%')
             </if>
         </where>
     </select>
@@ -94,10 +94,10 @@
         FROM XXL_JOB_GROUP t
         <where>
             <if test="appname != null and appname != ''">
-                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname,jdbcType=VARCHAR}), '%')
+                AND t.APP_NAME like CONCAT(CONCAT('%', #{appname}), '%')
             </if>
             <if test="title != null and title != ''">
-                AND t.TITLE like CONCAT(CONCAT('%', #{title,jdbcType=VARCHAR}), '%')
+                AND t.TITLE like CONCAT(CONCAT('%', #{title}), '%')
             </if>
         </where>
         ORDER BY t.APP_NAME, t.TITLE, t.ID ASC

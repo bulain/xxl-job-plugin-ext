@@ -32,19 +32,19 @@
         ADD_TIME,
         UPDATE_TIME
         ) VALUES (
-        #{jobId,jdbcType=NUMERIC},
-        #{glueType,jdbcType=VARCHAR},
-        #{glueSource,jdbcType=VARCHAR},
-        #{glueRemark,jdbcType=VARCHAR},
-        #{addTime,jdbcType=DATE},
-        #{updateTime,jdbcType=DATE}
+        #{jobId},
+        #{glueType},
+        #{glueSource},
+        #{glueRemark},
+        #{addTime},
+        #{updateTime}
         )
     </insert>
 
     <select id="findByJobId" parameterType="java.lang.Integer" resultMap="XxlJobLogGlue">
         SELECT <include refid="Base_Column_List"/>
         FROM XXL_JOB_LOGGLUE t
-        WHERE t.JOB_ID = #{jobId,jdbcType=NUMERIC}
+        WHERE t.JOB_ID = #{jobId}
         ORDER BY ID DESC
     </select>
 
@@ -55,18 +55,18 @@
             SELECT ID FROM (
                 SELECT ID
                 FROM XXL_JOB_LOGGLUE
-                WHERE JOB_ID = #{jobId,jdbcType=NUMERIC}
+                WHERE JOB_ID = #{jobId}
                 ORDER BY UPDATE_TIME desc
-                OFFSET 0 ROWS FETCH NEXT #{limit,jdbcType=NUMERIC} ROWS ONLY
+                OFFSET 0 ROWS FETCH NEXT #{limit} ROWS ONLY
             ) t1
         )
-          AND JOB_ID = #{jobId,jdbcType=NUMERIC}
+          AND JOB_ID = #{jobId}
     </delete>
 
     <delete id="deleteByJobId" parameterType="java.lang.Integer">
         DELETE
         FROM XXL_JOB_LOGGLUE
-        WHERE JOB_ID = #{jobId,jdbcType=NUMERIC}
+        WHERE JOB_ID = #{jobId}
     </delete>
 
 </mapper>
